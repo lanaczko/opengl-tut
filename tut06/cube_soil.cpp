@@ -1,5 +1,6 @@
 /* Using the standard output for fprintf */
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 /* Use glew.h instead of gl.h to get all the GL prototypes declared */
 #include <GL/glew.h>
@@ -12,6 +13,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <SOIL/SOIL.h>
+
 #include "shader_utils.h"
 /* ADD GLOBAL VARIABLES HERE LATER */
 int screen_width=800, screen_height=600;
@@ -23,8 +26,6 @@ GLuint ibo_cube_elements;
 GLint uniform_mvp;
 GLuint texture_id, program_id;
 GLint uniform_mytexture;
-
-#include "res_texture.c"
 
 struct attributes {
   GLfloat coord3d[3];
@@ -169,19 +170,6 @@ int init_resources(void)
     return 0;
   }
 
-  glGenTextures(1, &texture_id);
-  glBindTexture(GL_TEXTURE_2D, texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, // target
-	       0,  // level, 0 = base, no minimap,
-	       GL_RGB, // internalformat
-	       res_texture.width,  // width
-	       res_texture.height,  // height
-	       0,  // border, always 0 in OpenGL ES
-	       GL_RGB,  // format
-	       GL_UNSIGNED_BYTE, // type
-	       res_texture.pixel_data);
-
   return 1;
 }
  
@@ -216,7 +204,16 @@ void onDisplay()
   );
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture_id);
+  GLuint texture_id = SOIL_load_OGL_texture
+    (
+     "res_texture.jpg",
+     SOIL_LOAD_AUTO,
+     SOIL_CREATE_NEW_ID,
+     SOIL_FLAG_INVERT_Y
+     );
+  if(texture_id == 0)
+    std::cerr << "SOIL loading error: '" << SOIL_last_result() << "' (" << "res_texture.png" << ")" << std::endl;
+
   uniform_mytexture = glGetUniformLocation(program, "mytexture");
   glUniform1i(uniform_mytexture, /*GL_TEXTURE*/0);
  
